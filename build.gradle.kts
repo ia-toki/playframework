@@ -1,6 +1,7 @@
 plugins {
     groovy
     `java-gradle-plugin`
+    `maven-publish`
     org.gradle.playframework.`test-setup`
     org.gradle.playframework.`integration-test-fixtures`
     org.gradle.playframework.`integration-test`
@@ -8,10 +9,11 @@ plugins {
     org.gradle.playframework.`github-pages`
     org.gradle.playframework.`documentation-test`
     id("com.gradle.plugin-publish") version "0.12.0"
+    id("com.jfrog.bintray") version "1.8.4"
 }
 
-group = "org.gradle.playframework"
-version = "0.10"
+group = "org.iatoki"
+version = "0.15"
 
 repositories {
     jcenter()
@@ -122,5 +124,35 @@ pluginBundle {
     mavenCoordinates {
         groupId = project.group.toString()
         artifactId = base.archivesBaseName
+    }
+}
+
+val sourceJar by tasks.creating(Jar::class) {
+    archiveClassifier.set("sources")
+    from(sourceSets.getByName("main").allSource)
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            from(components["java"])
+            artifact(sourceJar)
+        }
+    }
+}
+
+bintray {
+    user = System.getenv("BINTRAY_USER")
+    key = System.getenv("BINTRAY_KEY")
+    setPublications("maven")
+
+    pkg.apply {
+        repo = "releases"
+        name = "playframework"
+        userOrg = "ia-toki"
+
+        version.apply {
+            name = "0.15"
+        }
     }
 }
